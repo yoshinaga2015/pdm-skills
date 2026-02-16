@@ -4,6 +4,9 @@
 
 作成したCursor Agent Skills をPdM向けにまとめた公開スキル集です。
 
+**この導入方法では、このリポジトリを事前に Clone する必要はありません。**  
+下のコマンドを実行すれば、自動でGitHubから直接インストーラーを取得して実行します。
+
 ## クイックインストール
 
 このREADMEは、**非エンジニアのPdMでも迷わず使える**ように書いています。  
@@ -112,6 +115,9 @@ rm -rf \
 ---
 
 A public collection of Cursor Agent Skills for product development work.
+
+You do **not** need to clone this repository before installing.  
+The commands below download and run the installer directly from GitHub.
 
 ## Quick Install
 
