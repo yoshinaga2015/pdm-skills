@@ -5,93 +5,93 @@ description: Improves existing UI by converting Flow A/B-test learnings into con
 
 # UI Improvement Skill
 
-## 目的
-既存UIの課題を、`Flow` ノウハウの再利用可能ルールに変換して、改善案・仮説・検証計画まで一気通貫で作る。
+## Purpose
+Turn existing UI problems into reusable, testable improvement rules, and produce complete outputs from hypothesis to experiment plan.
 
-## いつ使うか
-- 「この画面のCVRを上げたい」「離脱を減らしたい」などの改善依頼
-- pricing / paywall / onboarding / checkout / PDP の既存UI最適化
-- A/B結果の解釈、次実験の設計、負けパターンの学習化
+## When to Use
+- Requests such as "increase CVR on this screen" or "reduce drop-off"
+- Optimization work for existing pricing, paywall, onboarding, checkout, or PDP UI
+- Interpreting A/B outcomes, planning follow-up tests, and converting losses into reusable learning
 
-## 改善フレーム（必須）
-1. **現状把握**
-   - 目的行動、現行導線、阻害要因（不安・負荷・不明瞭）を分解。
-2. **課題タイプ分類**
-   - 情報不足 / 情報過多
-   - 摩擦（入力・手順・認証）
-   - 価値訴求不足
-   - 信頼不足（保証・透明性・社会的証明）
-   - 意味解釈ミス（コピー/アイコン）
-3. **比較仮説を作成**
-   - 現行維持案 + 改善案 + 折衷案の3点で作る。
-4. **ガードレールを定義**
-   - 成果が出ても、透明性や体験品質を損なう案は不採用。
-5. **検証計画を付与**
-   - 主指標 + 副指標 + 失敗時の学習方針まで出す。
+## Improvement Framework (Required)
+1. **Assess the current state**
+   - Break down target behavior, current flow, and blockers (anxiety, friction, ambiguity).
+2. **Classify the problem type**
+   - Information gap / information overload
+   - Flow friction (input, steps, authentication)
+   - Weak value communication
+   - Trust deficit (guarantees, transparency, social proof)
+   - Meaning mismatch (copy/icon interpretation)
+3. **Create comparative hypotheses**
+   - Always produce baseline-like + improved + balanced variants.
+4. **Define guardrails**
+   - Reject any variant that harms transparency or user experience quality, even if conversion rises.
+5. **Attach an evaluation plan**
+   - Include primary metrics, secondary metrics, and explicit learning goals for failed tests.
 
-## 改善ルール（Flowから抽出）
+## Improvement Rules
 
-### 1) 情報設計
-- シンプル化は「ノイズ削除」に限定し、意思決定情報は保持する。
-- 詳細は段階開示して、比較材料への到達導線を残す。
-- 価格・条件は「説明可能性」と「予測可能性」を優先する。
+### 1) Information Design
+- Limit simplification to noise reduction; preserve decision-critical information.
+- Use progressive disclosure while keeping access to comparison details.
+- Prioritize explainability and predictability in pricing and terms.
 
-### 2) 摩擦削減
-- upfront必須入力を最小化し、後段移動できるものは後ろへ。
-- フォームは単一画面と分割画面を比較し、進捗表示を付ける。
-- checkoutでは不要認証を避け、購入後にアカウント化を検討する。
+### 2) Friction Reduction
+- Minimize required upfront input and move heavy steps later where feasible.
+- Compare single-page vs multi-step forms, and include progress visibility.
+- In checkout, avoid unnecessary pre-purchase auth; consider account setup post-purchase.
 
-### 3) 訴求と信頼
-- 機能訴求だけでなく便益訴求も必ず比較する。
-- レビュー、保証、返品・解約条件の透明表示を優先候補にする。
-- 感情訴求は有効だが、根拠情報（数字・具体条件）とセットにする。
+### 3) Persuasion and Trust
+- Always compare feature-led and benefit-led messaging.
+- Prioritize clear trust elements: reviews, guarantees, return/cancellation transparency.
+- Emotional messaging is valid, but pair it with concrete proof (numbers, specific terms).
 
-### 4) 価格・プラン最適化
-- `conversion winner` と `profit winner` を分離評価する。
-- デフォルトプラン強調時でも、代替導線を明確に残す。
-- trial有無、trial期間、課金条件の見せ方を独立レバーとして扱う。
+### 4) Pricing and Plan Optimization
+- Evaluate `conversion winner` and `profit winner` separately.
+- Even with default-plan emphasis, keep alternative paths clearly visible.
+- Treat trial eligibility, trial duration, and billing-condition presentation as separate levers.
 
-### 5) マイクロUI
-- アイコン・CTAは「即時理解できる意味」を優先する。
-- 感情的な表現を使う場合は、汎用的対照案を必ず用意する。
+### 5) Micro UI
+- Favor icons and CTAs with immediate, unambiguous meaning.
+- When testing emotional expression, always include a neutral control variant.
 
-### 6) 学習運用
-- 負けABを失敗で終わらせず、境界条件（効く/効かない条件）を記録する。
-- 勝ちパターンは「再利用ルール」に昇格し、次案件の初期案へ組み込む。
+### 6) Learning Operations
+- Do not treat losing tests as dead ends; document boundary conditions (where it works / fails).
+- Promote winning patterns into reusable rules for future baseline proposals.
 
-## 出力フォーマット
-改善提案は必ず以下で返す。
+## Output Format
+Always return improvement proposals in this structure.
 
 ```markdown
-## 現状の課題仮説
-- [阻害要因の整理]
+## Current Problem Hypothesis
+- [Structured summary of blockers]
 
-## 改善仮説
+## Improvement Hypotheses
 - H1:
 - H2:
 
-## 施策案（比較）
-- A案(現状寄り):
-- B案(改善):
-- C案(折衷):
+## Variants (Comparative)
+- Variant A (baseline-friendly):
+- Variant B (improved):
+- Variant C (balanced):
 
-## 変更要素
-- 情報設計:
-- コピー/CTA:
-- 信頼要素:
-- 導線/入力:
+## Elements to Change
+- Information design:
+- Copy / CTA:
+- Trust signals:
+- Flow / input:
 
-## 計測設計
-- 主指標:
-- 副指標:
-- ガードレール:
-- 判定条件:
+## Measurement Plan
+- Primary metric:
+- Secondary metrics:
+- Guardrails:
+- Decision criteria:
 
-## 学習化
-- 勝ち/負け時に次へ残すルール:
+## Learning Output
+- Reusable rule to keep for both win and loss outcomes:
 ```
 
-## 優先度付け
-- まずは低コスト高インパクト（文言、順序、既存要素の露出改善）から。
-- 次に中コスト（レイアウト、導線再設計）。
-- 最後に高コスト（新機能追加、データ基盤変更）。
+## Prioritization
+- Start with low-cost, high-impact changes (copy, ordering, visibility of existing elements).
+- Then move to medium-cost changes (layout and flow redesign).
+- Finally evaluate high-cost changes (new features, data/infrastructure changes).
