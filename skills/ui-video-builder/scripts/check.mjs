@@ -3,7 +3,7 @@
 // このファイルは生成させず、ui-video-builder のスキルが配る決まった物として使う。中身を書き換えない。
 //
 // 使い方:
-//   node check.mjs --adapter <撮る関数のファイル> [--video 名前,名前] [--check same,blank,safe] [--repeat 3]
+//   node check.mjs --adapter <撮る関数のファイル> [--video 名前,名前] [--check same,blank,safe,hold,lines,cues] [--repeat 3]
 //
 // 撮る関数のファイル(adapter)は、生成した仕組みの側が用意する。約束は references/acceptance.md にある。
 //   export function videos(): Video[]
@@ -16,6 +16,10 @@
 //   blank  縦型の動画で、0.25秒ごとに撮り、絵の範囲が空のコマ(平らな升が6割を超える)が無いか。
 //          強調の印(data-video-emphasis)が、絵の範囲の端から24pxの内側に収まるか
 //   safe   縦型の動画で、字幕・見出し・注記・ロゴが TikTok の安全域に収まるか
+//   hold   強調の印(data-video-mark)を、描き終えてから1.5秒以上、切れずに映し続けるか
+//   lines  枠と丸の印の線が、文字・ボタン・小さなアイコンに重ならないか
+//   cues   効果音が鳴るコマの前後0.5秒に、同じ意味の印(印・カーソル・クリックの波紋)が見えるか
+//   hold と lines は印のある動画(marks: true)、cues は効果音のある動画(cues)だけで確かめる
 //
 // 依存は Node の標準の部品だけにする。画像の復号は、adapter が渡すページの中で行う。
 
@@ -35,6 +39,12 @@ const FLAT_STD = 3;
 const BLANK_RATIO = 0.6;
 /** 強調の印と、絵の範囲の端の間に残す余白(px)。 */
 const EMPHASIS_MARGIN = 24;
+/** 強調の印を、描き終えてから映し続ける最短の長さ(秒)。 */
+const HOLD_SECONDS = 1.5;
+/** 印の長さと線の重なりを確かめるコマの間隔。 */
+const MARK_STEP = 3;
+/** 効果音と印を突き合わせる、前後のコマ数。 */
+const CUE_WINDOW = 15;
 /** 安全域を確かめる間隔(コマ)。 */
 const SAFE_EVERY = 10;
 
@@ -306,16 +316,21 @@ async function checkBlank(adapter, video) {
       from: run.from,
       to: run.to,
       shoot: (f) => blankSample(f, video.fps),
-      onShot: async (frame, png, page) => {
+      onShot: async (frame, png, page, extra) => {
         checked++;
         const scene = video.scenes.findLast((sc) => sc.from <= frame);
         const ratio = await flatRatio(page, png, pic);
         if (ratio > BLANK_RATIO && !exempt.has(scene?.id ?? "")) blanks.push({ frame, ratio, scene: scene?.id });
-        for (const r of await page.evaluate(emphasisRects)) {
-          const x = r.x * k;
-          const y = r.y * k;
-          const right = x + r.width * k;
-          const bottom = y + r.height * k;
+        // 印が別のページ(縦型のアプリのページ)に描かれるときは、そのページで測って動画の px に直す
+        const markPage = extra?.appPage ?? page;
+        const ks = extra?.appPage ? extra.appScale : k;
+        const ox = extra?.appPage ? extra.window.x : 0;
+        const oy = extra?.appPage ? extra.window.y : 0;
+        for (const r of await markPage.evaluate(emphasisRects)) {
+          const x = ox + r.x * ks;
+          const y = oy + r.y * ks;
+          const right = x + r.width * ks;
+          const bottom = y + r.height * ks;
           if (!r.clipped && x >= inner.left && y >= inner.top && right <= inner.right && bottom <= inner.bottom) continue;
           overflows.push({ frame, x, y, right, bottom, clipped: r.clipped });
         }
@@ -382,6 +397,162 @@ async function checkSafe(adapter, video) {
   return outside;
 }
 
+/**
+ * 強調の印の状態を集める。ページの中で動かす。picture はページの px の、映る範囲。
+ * - full: 映る範囲の中に、切り落とされずに完全に見え、不透明度が 0.5 以上か
+ * - hits: lines のとき、枠と丸の線に重なる文字・ボタン・小さなアイコン
+ */
+function markStates({ picture, lines }) {
+  const OVERLAY = "#__video_deck,[data-video-caption],[data-video-heading],[data-video-legal-note],[data-video-dev-note],[data-video-emphasis],[data-video-cursor],[data-video-tap]";
+  const opacity = (el) => {
+    let o = 1;
+    for (let a = el; a !== null; a = a.parentElement) o *= Number(getComputedStyle(a).opacity);
+    return o;
+  };
+  const meet = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  const inside = (a, b) => a.left >= b.left && a.right <= b.right && a.top >= b.top && a.bottom <= b.bottom;
+  let obstacles = null;
+  const collect = () => {
+    const out = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n !== null; n = walker.nextNode()) {
+      const text = n.textContent.trim();
+      const el = n.parentElement;
+      if (text === "" || el === null || el.closest(OVERLAY) !== null || el.closest("style,script") !== null) continue;
+      if (opacity(el) < 0.3 || getComputedStyle(el).visibility === "hidden") continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      for (const r of range.getClientRects()) if (r.width > 0 && r.height > 0) out.push({ left: r.left, top: r.top, right: r.right, bottom: r.bottom, label: text.slice(0, 20) });
+    }
+    for (const el of document.querySelectorAll('button,a[href],input,select,[role="button"],svg,img')) {
+      if (el.closest(OVERLAY) !== null) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      if ((el.tagName === "svg" || el.tagName === "IMG") && (r.width > 40 || r.height > 40)) continue;
+      if (opacity(el) < 0.3) continue;
+      out.push({ left: r.left, top: r.top, right: r.right, bottom: r.bottom, label: `<${el.tagName.toLowerCase()}>` });
+    }
+    return out;
+  };
+  const out = [];
+  for (const el of document.querySelectorAll("[data-video-mark]")) {
+    const o = opacity(el);
+    if (o < 0.05) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) continue;
+    const kind = el.getAttribute("data-video-mark-kind");
+    const full = o >= 0.5 && r.left >= picture.left && r.right <= picture.right && r.top >= picture.top && r.bottom <= picture.bottom;
+    const hits = [];
+    if (lines && o >= 0.5 && (kind === "box" || kind === "circle")) {
+      obstacles ??= collect();
+      const sw = Number.parseFloat(getComputedStyle(el).strokeWidth) || 5;
+      if (kind === "box") {
+        const outer = { left: r.left - sw / 2, top: r.top - sw / 2, right: r.right + sw / 2, bottom: r.bottom + sw / 2 };
+        const inner = { left: r.left + sw / 2 + 1, top: r.top + sw / 2 + 1, right: r.right - sw / 2 - 1, bottom: r.bottom - sw / 2 - 1 };
+        for (const b of obstacles) if (meet(outer, b) && !inside(b, inner) && !inside(outer, b)) hits.push(b.label);
+      } else {
+        const total = el.getTotalLength();
+        const drawn = total * (1 - Number(el.getAttribute("stroke-dashoffset") ?? 0));
+        const m = el.getScreenCTM();
+        const R = sw / 2 + 1;
+        for (let i = 0; i <= 120; i++) {
+          const p = el.getPointAtLength((drawn * i) / 120).matrixTransform(m);
+          for (const b of obstacles) if (p.x > b.left - R && p.x < b.right + R && p.y > b.top - R && p.y < b.bottom + R) hits.push(b.label);
+        }
+      }
+    }
+    out.push({ key: el.getAttribute("data-video-mark"), kind, drawn: el.getAttribute("data-video-drawn") === "1", full, hits: [...new Set(hits)] });
+  }
+  const visible = (sel) => [...document.querySelectorAll(sel)].some((e) => opacity(e) >= 0.05 && e.getBoundingClientRect().width > 0);
+  return { marks: out, cursor: visible("[data-video-cursor]"), tap: visible("[data-video-tap]") };
+}
+
+/** 印のページで、映る範囲(ページの px)。縦型ではアプリのページの全体、横型では動画の絵の範囲 */
+function markPicture(video, extra) {
+  if (extra?.appPage && extra.appScale !== 1) return { left: 0, top: 0, right: extra.window.width / extra.appScale, bottom: extra.window.height / extra.appScale };
+  const p = pictureOf(video);
+  const k = scaleOf(video);
+  return { left: p.x / k, top: p.y / k, right: (p.x + p.width) / k, bottom: (p.y + p.height) / k };
+}
+
+async function checkMarks(adapter, video, { hold, lines }) {
+  const need = Math.ceil(HOLD_SECONDS * video.fps) - MARK_STEP;
+  const marks = new Map();
+  const hitLog = [];
+  let checked = 0;
+  for (const run of runsOf(video)) {
+    await adapter.shoot({
+      video: video.id,
+      from: run.from,
+      to: run.to,
+      shoot: () => false,
+      onShot: () => {},
+      onFrame: async (frame, page, extra) => {
+        if ((frame - run.from) % MARK_STEP !== 0) return;
+        checked++;
+        const states = await (extra?.appPage ?? page).evaluate(markStates, { picture: markPicture(video, extra), lines });
+        for (const m of states.marks) {
+          const rec = marks.get(m.key) ?? { kind: m.kind, drawnAt: null, best: 0, streak: 0, last: null };
+          if (m.drawn && rec.drawnAt === null) rec.drawnAt = frame;
+          if (m.drawn && m.full) {
+            rec.streak = rec.last === frame - MARK_STEP ? rec.streak + MARK_STEP : 0;
+            rec.best = Math.max(rec.best, rec.streak);
+            rec.last = frame;
+          }
+          marks.set(m.key, rec);
+          if (m.hits.length > 0) hitLog.push({ frame, key: m.key, hits: m.hits });
+        }
+      }
+    });
+  }
+  let problems = 0;
+  if (hold) {
+    for (const [key, rec] of marks) {
+      if (rec.drawnAt === null) {
+        problems++;
+        console.log(`描き終えない印  ${key}(${rec.kind})`);
+      } else if (rec.best < need) {
+        problems++;
+        console.log(`短い印  ${key}(${rec.kind}) 描き終えてから切れずに見えた長さ ${((rec.best + MARK_STEP) / video.fps).toFixed(2)} 秒(要るのは ${HOLD_SECONDS} 秒)`);
+      }
+    }
+    console.log(`印の長さ: 印 ${marks.size} 個を ${checked} コマで確かめ、足りない印は ${problems} 個`);
+  }
+  if (lines) {
+    for (const h of hitLog) console.log(`線の重なり  コマ ${h.frame} の印 ${h.key} が「${h.hits.slice(0, 3).join("」「")}」に重なる`);
+    const hitFrames = new Set(hitLog.map((h) => h.frame)).size;
+    console.log(`線の重なり: 枠と丸の線が文字・ボタン・アイコンに重なったコマは ${hitFrames} コマ`);
+    problems += hitFrames;
+  }
+  return problems;
+}
+
+async function checkCues(adapter, video) {
+  const misses = [];
+  for (const cue of video.cues) {
+    const from = Math.max(0, cue.frame - CUE_WINDOW);
+    const run = runsOf(video).findLast((r) => r.from <= from) ?? { from: 0 };
+    let seen = false;
+    await adapter.shoot({
+      video: video.id,
+      from: run.from,
+      to: Math.min(cue.frame + CUE_WINDOW + 1, video.scenes.reduce((n, s) => Math.max(n, s.from + s.durationInFrames), 0)),
+      shoot: () => false,
+      onShot: () => {},
+      onFrame: async (frame, page, extra) => {
+        if (seen || frame < from || (frame - from) % 3 !== 0) return;
+        const st = await (extra?.appPage ?? page).evaluate(markStates, { picture: markPicture(video, extra), lines: false });
+        if (cue.kind === "click") seen = st.tap || st.cursor;
+        else seen = st.marks.some((m) => cue.mark === undefined || m.key === cue.mark);
+      }
+    });
+    if (!seen) misses.push(cue);
+    console.log(`${seen ? "見える" : "見えない"}  コマ ${cue.frame} の効果音(${cue.kind}${cue.mark ? `、印 ${cue.mark}` : ""})`);
+  }
+  console.log(`効果音と印: ${video.cues.length} 個のうち、前後${CUE_WINDOW}コマに印が見えないのは ${misses.length} 個`);
+  return misses.length;
+}
+
 // ---- 本体 ----------------------------------------------------------------
 
 function validate(video) {
@@ -408,7 +579,7 @@ async function main() {
   const all = await adapter.videos();
   all.forEach(validate);
   const names = values.video ? values.video.split(",") : all.map((v) => v.id);
-  const checks = (values.check ?? "same,blank,safe").split(",");
+  const checks = (values.check ?? "same,blank,safe,hold,lines,cues").split(",");
   const handle = typeof adapter.setup === "function" ? await adapter.setup() : null;
   const failures = [];
   try {
@@ -424,6 +595,14 @@ async function main() {
       if (checks.includes("blank") && (isVertical(video) || video.blank === true)) {
         const n = await checkBlank(adapter, video);
         if (n > 0) failures.push(`${video.id}: 空のコマと、強調の印がはみ出したコマが合わせて ${n} コマ`);
+      }
+      if ((checks.includes("hold") || checks.includes("lines")) && video.marks === true) {
+        const n = await checkMarks(adapter, video, { hold: checks.includes("hold"), lines: checks.includes("lines") });
+        if (n > 0) failures.push(`${video.id}: 印の長さか線の重なりに、${n} 件の問題`);
+      }
+      if (checks.includes("cues") && (video.cues ?? []).length > 0) {
+        const n = await checkCues(adapter, video);
+        if (n > 0) failures.push(`${video.id}: 印の見えない効果音が ${n} 個`);
       }
       if (checks.includes("safe") && isVertical(video)) {
         const n = await checkSafe(adapter, video);

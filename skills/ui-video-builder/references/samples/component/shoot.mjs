@@ -23,13 +23,17 @@ export async function shootRun(page, url, { from, to, shoot, onShot, onFrame, cl
       await page.evaluate((f) => window.__setFrame(f), frame);
       await page.clock.runFor(1000 / FPS);
     }
-    await page.evaluate((f) => window.__syncAnimations(f), frame);
-    if (onFrame !== undefined) await onFrame(frame, page);
+    await page.evaluate((f) => {
+      window.__syncAnimations(f);
+      // 重ねる層(overlay.js)を差し込んでいれば、字幕・強調の印・カーソルなどを描く
+      window.__overlayFrame?.(f);
+    }, frame);
+    if (onFrame !== undefined) await onFrame(frame, page, { appPage: page, window: { x: 0, y: 0, ...page.viewportSize() }, appScale: 1 });
     if (!shoot(frame)) {
       await drawFrame(page);
       continue;
     }
     const png = await page.screenshot({ animations: "allow", caret: "hide", ...(clip === undefined ? {} : { clip }) });
-    await onShot(frame, png, page);
+    await onShot(frame, png, page, { appPage: page, window: { x: 0, y: 0, ...page.viewportSize() }, appScale: 1 });
   }
 }

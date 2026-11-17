@@ -19,6 +19,15 @@
 //     ],
 //     captions: [[0, 60, "質問を打ちます"], [60, 150, "AI が答えます"]],
 //     camera: [[0, 0, { full: true }], [44, 52, { selector: ".chat", pad: 24, maxHeight: 600 }]],
+//     // 重ねる部品(省ける)。形は overlay.js の6節
+//     marks: [{ id: "answer", at: 90, until: 150, type: "circle", selector: ".answer strong" }],
+//     labels: [{ at: 50, until: 60, text: "▶▶ 早送り", corner: "top-right" }],
+//     cursor: [{ at: 15, selector: "input" }, { at: 50, selector: "button[type=submit]", click: true }],
+//     cards: [{ at: 0, until: 45, title: "タスクを\nAIに聞く", subtitle: "アプリの名前", logo: "/logo.svg" }],
+//     notes: [{ at: 0, text: "開発中の画面です", kind: "dev" }, { at: 150, text: "法務の注記の文", kind: "legal" }],
+//     // ナレーションと効果音(省ける)。narrate.mjs と render.mjs が読む
+//     narration: [{ id: "ask", at: 10, text: "まず、タスクを聞いてみます", say: "読み上げ用の仮名の文(省ける)" }],
+//     sounds: [{ at: 50, file: "video/sounds/click.mp3", kind: "click" }, { at: 92, file: "video/sounds/pen.mp3", kind: "mark" }],
 //     // 寄る先は { full: true } か { selector, pad, maxHeight, zoom, align }。overlay.js の4節
 //
 //     // 縦型にするときだけ書く。アプリはパソコンの大きさ(app)のまま描き、その絵を縦の台紙の窓(window)に置く。
@@ -131,7 +140,12 @@ export async function shootScene(browser, { origin, scene, recording, from = 0, 
       camera: scene.camera ?? [],
       seed: scene.seed,
       randomMode: scene.randomMode,
-      hide: scene.hide ?? []
+      hide: scene.hide ?? [],
+      marks: scene.marks ?? [],
+      labels: scene.labels ?? [],
+      cursor: scene.cursor ?? [],
+      cards: scene.cards ?? [],
+      notes: scene.notes ?? []
     });
     await context.addInitScript(OVERLAY);
     const replay = await installReplay(context, recording, {
@@ -187,25 +201,29 @@ export async function shootScene(browser, { origin, scene, recording, from = 0, 
         await drawFrame(page);
         continue;
       }
+      // 合格試験に渡す、アプリのページの情報。強調の印やカーソルは、アプリのページに描かれる
       if (!vertical) {
-        if (onFrame !== undefined) await onFrame(f, page);
+        const extra = { appPage: page, window: { x: 0, y: 0, width: scene.width, height: scene.height }, appScale: 1 };
+        if (onFrame !== undefined) await onFrame(f, page, extra);
         if (!shoot(f)) {
           await drawFrame(page);
           continue;
         }
-        await onShot(f, await page.screenshot({ animations: "allow", caret: "hide" }), page);
+        await onShot(f, await page.screenshot({ animations: "allow", caret: "hide" }), page, extra);
         continue;
       }
       // 縦型: アプリの絵を撮り、台紙の窓に置いて、台紙を撮る。合格試験が測るのは台紙のページ
       const appPng = await page.screenshot({ animations: "allow", caret: "hide" });
       const cap = (scene.captions ?? []).find(([a, b]) => f >= a && f < b);
       await board.update(appPng, cap ? cap[2] : null);
-      if (onFrame !== undefined) await onFrame(f, board.page);
+      // 縦型では、アプリのページの1px は、台紙の窓で appScale px になる
+      const extra = { appPage: page, window: scene.vertical.window, appScale: scene.vertical.window.width / app.width };
+      if (onFrame !== undefined) await onFrame(f, board.page, extra);
       if (!shoot(f)) {
         await drawFrame(board.page);
         continue;
       }
-      await onShot(f, await board.page.screenshot({ animations: "allow", caret: "hide" }), board.page);
+      await onShot(f, await board.page.screenshot({ animations: "allow", caret: "hide" }), board.page, extra);
     }
     return { misses: [...new Set(replay.state.misses)] };
   } finally {
