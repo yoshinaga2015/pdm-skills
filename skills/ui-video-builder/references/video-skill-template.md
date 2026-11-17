@@ -46,7 +46,11 @@ description: "<このアプリ>の操作説明や宣伝の動画を、台本か�
 | `video/replay.mjs` | 録った通信を返す仕組み |
 | `video/overlay.js` | ページに重ねる字幕とカメラ |
 | `video/record.mjs` | 通信を録るスクリプト |
-| `video/render.mjs` | 全コマを撮って mp4 にするスクリプト |
+| `video/render.mjs` | 全コマを撮って、音を重ねた mp4 と字幕の SRT にするスクリプト |
+| `video/narrate.mjs` | ナレーションの音声を作り、長さを記録するスクリプト |
+| `video/narration.mjs` | ナレーションの時刻と SRT を決める部品 |
+| `video/narration/` | ナレーションの音声と長さの記録 |
+| `video/sounds/` | 効果音のファイル |
 | `video/check-adapter.mjs` | 合格試験に渡す撮る関数 |
 | `out/video/` | 撮ったコマと mp4。git に入れない |
 
@@ -61,6 +65,12 @@ description: "<このアプリ>の操作説明や宣伝の動画を、台本か�
 | 場面の長さ | `scenes` の `durationInFrames` | 操作と字幕の時刻 |
 | 答えが流れる速さ | `actions` の `stream` の `every`(何コマに1つ)と `perFrame`(1回にいくつ) | 場面の長さに収まるか |
 | 開いた直後の動きを済ませておく | `leadFrames` | なし |
+| 赤い丸や枠を足す・消す | `marks` | 印の id を効果音の `mark` で指していれば、そちらも直す |
+| カーソルの動きとクリック | `cursor` | クリックの操作(`actions`)と同じコマにする |
+| 題名やロゴの札 | `cards` | なし |
+| 断りと法務の注記 | `notes` | なし |
+| ナレーションの文 | `narration` の `text`(読みは `say`) | `narrate.mjs` で音声を作り直す。課金されるので、利用者に確かめる |
+| 効果音 | `sounds` | 印やクリックに合わせた音は `kind` を付ける |
 | 応答の文 | 手で書き換えない。通信を録り直す | なし |
 <このリポジトリで出てきた直しを足す>
 

@@ -29,6 +29,9 @@ export function videos() {
     height: s.height,
     scenes: s.scenes,
     vertical: s.vertical !== undefined,
+    // 印のある動画は、印の長さと線の重なりを確かめる。効果音のうち kind のあるものは、印と時刻を突き合わせる
+    marks: (s.marks ?? []).length > 0,
+    cues: (s.sounds ?? []).filter((x) => x.kind !== undefined).map((x) => ({ frame: x.at, kind: x.kind, mark: x.mark })),
     // 縦型は、空のコマを数える範囲を、アプリの絵を置いた窓にする。台紙の地の色を含めると必ず空と数える
     ...(s.vertical !== undefined && s.picture === undefined && { picture: s.vertical.window }),
     ...Object.fromEntries(["picture", "blank", "blankExemptScenes", "allowedAreas", "pageScale"].filter((k) => s[k] !== undefined).map((k) => [k, s[k]]))

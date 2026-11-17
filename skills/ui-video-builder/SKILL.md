@@ -25,6 +25,8 @@ description: "Sets up, in the user's own repository, a pipeline that lets an AI 
 | `scripts/check.mjs` | 合格試験。生成させず、このまま使う。中身を書き換えない |
 | `scripts/repeat.mjs` | 揺れの原因を絞る道具。同じコマを何回も撮り、違う範囲を出す |
 
+見本の画面の作り方には、記事や広告の動画で使う部品が入っている。強調の印(赤い丸、枠、取り消し線、蛍光ペン)、早送りの札、マウスのカーソルとクリックの波紋、題名やロゴの札、断りと法務の注記、ナレーション(ElevenLabs)、効果音、字幕の SRT である。どれも場面の設定に書くだけで描かれる。形は `references/samples/screen/shoot.mjs` の冒頭と `overlay.js` の6節にある。部品の作り方でも、`overlay.js` を部品の作り方の見本と同じ置き場に写し、動画の構成に `overlay: { captions, marks, cursor, cards, notes }` を書けば、同じ部品が使える。見本の `check-adapter.mjs` が `overlay.js` を差し込み、撮るループが毎コマ描かせる。
+
 ## 全体の流れ
 
 1. リポジトリを調べる
@@ -100,6 +102,9 @@ description: "Sets up, in the user's own repository, a pipeline that lets an AI 
    - 依頼の時点で台本と向き(横型か縦型か)が決まっていれば、最初の1場面はその台本で作る。この場合、この段で作った1場面が利用者の1本目になり、6段は飛ばして7段へ進む。5段(動画のスキル)は飛ばさない
    - 縦型は、場面の設定に `vertical` を書く。アプリはパソコンの大きさのまま描かれ、その絵が縦の台紙の窓に置かれ、字幕は台紙に描かれる。組み方の決まりは `references/principles.md` の7節の「縦型」
    - ボタンで送るアプリは、送るクリックに `send: true` を付ける
+   - 強調の印、カーソル、題名の札、注記は、場面の設定の `marks`、`cursor`、`cards`、`notes` に書く。カーソルを着かせるコマは、クリックの操作と同じコマにする
+   - 文の途中の語を丸で囲むと、前後の文字に線がかかり、合格試験の「線の重なり」で落ちる。文の1行や欄を枠で囲む
+   - 効果音は `sounds` に書く。印やクリックに合わせて鳴らす音には `kind` を付けると、合格試験が時刻を突き合わせる
    - 字幕は操作の前に出す。録った応答はすぐ返るので、「更新中」のような途中の表示を見せたいときは `responseDelayFrames` で応答を遅らせる
    - 映したくない要素(クッキーの案内など)は `hide` に書く。フレームワークの開発用の表示は、既定で隠す
    - カメラの最初の寄る先は `{ full: true }` にする。画面の全体を、字幕の帯の下に収める。縦に長い要素に寄るときは `maxHeight` で上の部分に絞る
@@ -154,4 +159,10 @@ description: "Sets up, in the user's own repository, a pipeline that lets an AI 
 
 ## 任意の機能: ナレーション
 
-利用者が頼んだときだけ入れる。ElevenLabs を使い、鍵は利用者が用意する。作り方と注意は `references/principles.md` の8節にある。音声の生成は課金されるので、作り直す前に利用者に確かめる。
+利用者が頼んだときだけ入れる。ElevenLabs を使い、鍵と声の id は利用者が用意する。
+
+1. 場面の設定の `narration` に、発話の id、文、話し始めるコマ(`at`)か前の発話からの間(`after` と `gap`)を書く。読みを直すときは `say` に仮名の文を書く
+2. 何本の発話を作るかを利用者に伝え、課金されることを確かめてから、`ELEVENLABS_API_KEY=... node video/narrate.mjs --video <名前>` を流す。文が前と同じ発話は作り直さない。前の音声は `before-<日時>/` へ移る
+3. `render.mjs` が、発話の長さから時刻を決めて音声を重ね、発話の文で字幕の SRT を書く
+
+注意は `references/principles.md` の8節にある。
