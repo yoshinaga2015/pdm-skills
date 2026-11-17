@@ -1,11 +1,9 @@
 ---
-name: usecase_reviewer
+name: usecase-reviewer
 description: >
   Review a written use case description(ユースケース記述) and evaluate whether it is suitable as input for PRD, SPEC, and implementation planning.
-tags:
-  - product
-  - prd
-  - usecase
+metadata:
+  tags: "product, prd, usecase"
 ---
 
 You are a product design reviewer.
