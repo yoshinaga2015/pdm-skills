@@ -13,7 +13,7 @@
 | [analysis-report](skills/analysis-report/SKILL.md) | 広告やサイトの数字を、関係者が数分で読めるHTMLのレポートやダッシュボードにまとめる | 広告の結果の分析、媒体・広告・ページごとのCVRやCPAの比較、目標に届くまでの見込み |
 | [ui-creation](skills/ui-creation/SKILL.md) | コンバージョンを意識した型を使って、新しい画面の構成、文言、CTAを組み立てる | オンボーディング、料金、課金、購入、商品詳細の画面を新しく作るとき |
 | [ui-improvement](skills/ui-improvement/SKILL.md) | 今の画面の課題を、仮説、比べる案、評価の計画にまとめる | 今の画面のCVRや継続率を上げたいとき、成果が出ない理由を探るとき |
-| [usecase_reviewer](skills/usecase_reviewer/SKILL.md) | ユースケース記述が、PRD、仕様、実装計画の入力として使えるかを評価する | ユースケースを書いたあと、PRDに進む前 |
+| [usecase-reviewer](skills/usecase-reviewer/SKILL.md) | ユースケース記述が、PRD、仕様、実装計画の入力として使えるかを評価する | ユースケースを書いたあと、PRDに進む前 |
 | [implement-figma-to-code](skills/implement-figma-to-code/SKILL.md) | Figmaのデザインを、見た目を合わせたコードにする | FigmaのURLから部品や画面を実装するとき。Figma MCPサーバーの接続が必要 |
 | [git-worktree-pr-flow](skills/git-worktree-pr-flow/SKILL.md) | git worktreeでブランチごとに作業フォルダを分け、mainをきれいに保つ | PRを立てて開発するとき |
 
@@ -87,8 +87,10 @@ curl -fsSL https://raw.githubusercontent.com/yoshinaga2015/pdm-skills/main/scrip
 
 ```bash
 cd .cursor/skills   # --global で入れた場合は ~/.cursor/skills
-rm -rf analysis-report ui-creation ui-improvement usecase_reviewer implement-figma-to-code git-worktree-pr-flow
+rm -rf analysis-report ui-creation ui-improvement usecase-reviewer implement-figma-to-code git-worktree-pr-flow
 ```
+
+2026年11月より前に入れた場合は、名前を変える前の`usecase_reviewer`のフォルダも残っています。あわせて消してください。
 
 ## 必要なもの
 
@@ -102,6 +104,10 @@ macOSかLinuxで、`bash`、`curl`、`tar`、`rsync`、`mktemp`が使えるこ�
 | 権限のエラーが出る | 書き込める場所を`--dest`で指定する |
 | エージェントがスキルを使わない | 入れた先が、そのエージェントが読む場所か。エージェントを再起動したか |
 | 何も入らない | ネットにつながっているか。`--ref`の値が正しいか |
+
+## ライセンス
+
+[MIT License](LICENSE)
 
 ## ご利用にあたって
 
@@ -123,7 +129,7 @@ Skills follow the [Agent Skills](https://agentskills.io/specification) format (`
 | [analysis-report](skills/analysis-report/SKILL.md) | Turns ad and site metrics into an HTML report or dashboard a stakeholder can read in minutes | Analyzing ad results, comparing CVR/CPA by channel, ad, or page, projecting time to a goal |
 | [ui-creation](skills/ui-creation/SKILL.md) | Drafts the structure, copy, and CTAs of a new screen with conversion-oriented patterns | Building onboarding, pricing, paywall, checkout, or product detail screens |
 | [ui-improvement](skills/ui-improvement/SKILL.md) | Turns problems with an existing screen into hypotheses, variants, and an evaluation plan | Raising CVR or retention, diagnosing an underperforming screen |
-| [usecase_reviewer](skills/usecase_reviewer/SKILL.md) | Reviews a use case description as input for a PRD, spec, and implementation plan | After writing a use case, before the PRD |
+| [usecase-reviewer](skills/usecase-reviewer/SKILL.md) | Reviews a use case description as input for a PRD, spec, and implementation plan | After writing a use case, before the PRD |
 | [implement-figma-to-code](skills/implement-figma-to-code/SKILL.md) | Implements Figma designs as code that matches visually | Building components from Figma URLs. Requires the Figma MCP server |
 | [git-worktree-pr-flow](skills/git-worktree-pr-flow/SKILL.md) | Keeps one working folder per branch with git worktree so main stays clean | PR-based development |
 
@@ -161,11 +167,15 @@ Ask the agent as usual. It reads each skill's `description` and loads the matchi
 
 ### Update and uninstall
 
-Run the install command again to update. To uninstall, delete the skill folders from the target directory.
+Run the install command again to update. To uninstall, delete the skill folders from the target directory. If you installed before November 2026, also delete the old `usecase_reviewer` folder (renamed to `usecase-reviewer`).
 
 ### Requirements
 
 macOS or Linux with `bash`, `curl`, `tar`, `rsync`, and `mktemp`.
+
+### License
+
+[MIT License](LICENSE)
 
 ### Notes
 

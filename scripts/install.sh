@@ -9,7 +9,8 @@ DEST=""
 
 print_help() {
   cat <<'EOF'
-Install pdm-skills into Cursor skills directories.
+Install pdm-skills (Agent Skills format) into a skills directory.
+Defaults to Cursor. Use --dest for other agents, e.g. Claude Code: --dest "$HOME/.claude/skills"
 
 Usage:
   install.sh [--project|--global|--dest PATH] [--ref REF]
