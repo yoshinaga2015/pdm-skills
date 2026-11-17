@@ -16,6 +16,7 @@
 | [usecase-reviewer](skills/usecase-reviewer/SKILL.md) | ユースケース記述が、PRD、仕様、実装計画の入力として使えるかを評価する | ユースケースを書いたあと、PRDに進む前 |
 | [implement-figma-to-code](skills/implement-figma-to-code/SKILL.md) | Figmaのデザインを、見た目を合わせたコードにする | FigmaのURLから部品や画面を実装するとき。Figma MCPサーバーの接続が必要 |
 | [git-worktree-pr-flow](skills/git-worktree-pr-flow/SKILL.md) | git worktreeでブランチごとに作業フォルダを分け、mainをきれいに保つ | PRを立てて開発するとき |
+| [ui-video-builder](skills/ui-video-builder/SKILL.md) | アプリの実際の画面を使った操作説明や宣伝の動画を、エージェントが作り直せる仕組みを、リポジトリに合わせて生成する。画面は録画せず、同じコマが毎回同じ絵になるように1コマずつ撮り、付属の合格試験で確かめる | 自分のアプリのデモ動画やTikTok向けの縦型の広告動画を、エージェントに作らせたいとき |
 
 ## 入れ方
 
@@ -76,6 +77,7 @@ curl -fsSL https://raw.githubusercontent.com/yoshinaga2015/pdm-skills/main/scrip
 
 - 「この広告の書き出しを分析して、ダッシュボードにして」→ analysis-report
 - 「この料金ページのCVRを上げたい」→ ui-improvement
+- 「このリポジトリに、操作説明の動画を作る仕組みを入れて」→ ui-video-builder
 
 スキルの名前を挙げて頼むこともできます（例：「analysis-reportのスキルでまとめて」）。
 
@@ -87,7 +89,7 @@ curl -fsSL https://raw.githubusercontent.com/yoshinaga2015/pdm-skills/main/scrip
 
 ```bash
 cd .cursor/skills   # --global で入れた場合は ~/.cursor/skills
-rm -rf analysis-report ui-creation ui-improvement usecase-reviewer implement-figma-to-code git-worktree-pr-flow
+rm -rf analysis-report ui-creation ui-improvement usecase-reviewer implement-figma-to-code git-worktree-pr-flow ui-video-builder
 ```
 
 2026年11月より前に入れた場合は、名前を変える前の`usecase_reviewer`のフォルダも残っています。あわせて消してください。
@@ -95,6 +97,8 @@ rm -rf analysis-report ui-creation ui-improvement usecase-reviewer implement-fig
 ## 必要なもの
 
 macOSかLinuxで、`bash`、`curl`、`tar`、`rsync`、`mktemp`が使えること。macOSには最初から入っています。
+
+ui-video-builderは、ほかにNode.jsとffmpegを使います。Playwrightは、エージェントがリポジトリに入れます。ナレーションを付けるときは、ElevenLabsの鍵が要ります。
 
 ## うまくいかないとき
 
@@ -132,6 +136,7 @@ Skills follow the [Agent Skills](https://agentskills.io/specification) format (`
 | [usecase-reviewer](skills/usecase-reviewer/SKILL.md) | Reviews a use case description as input for a PRD, spec, and implementation plan | After writing a use case, before the PRD |
 | [implement-figma-to-code](skills/implement-figma-to-code/SKILL.md) | Implements Figma designs as code that matches visually | Building components from Figma URLs. Requires the Figma MCP server |
 | [git-worktree-pr-flow](skills/git-worktree-pr-flow/SKILL.md) | Keeps one working folder per branch with git worktree so main stays clean | PR-based development |
+| [ui-video-builder](skills/ui-video-builder/SKILL.md) | Generates, tailored to your repository, a pipeline that lets an agent make and remake demo and promo videos from your app's real UI. No screen recording: frames are rendered one at a time so the same frame is always the same image, verified by a bundled acceptance test | Having an agent make product demo videos or vertical TikTok ads of your app |
 
 ### Install
 
@@ -171,7 +176,7 @@ Run the install command again to update. To uninstall, delete the skill folders 
 
 ### Requirements
 
-macOS or Linux with `bash`, `curl`, `tar`, `rsync`, and `mktemp`.
+macOS or Linux with `bash`, `curl`, `tar`, `rsync`, and `mktemp`. ui-video-builder also uses Node.js and ffmpeg; the agent adds Playwright to your repository. Narration needs an ElevenLabs API key.
 
 ### License
 
